@@ -1,0 +1,31 @@
+{
+  "buildFiles": [
+    "H:\\New folder\\screen-recorder\\node_modules\\react-native\\ReactAndroid\\cmake-utils\\default-app-setup\\CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "C:\\Users\\Bilal khan\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+      "-C",
+      "H:\\New folder\\screen-recorder\\android\\app\\.cxx\\Debug\\5ye32306\\x86_64",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "C:\\Users\\Bilal khan\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+    "-C",
+    "H:\\New folder\\screen-recorder\\android\\app\\.cxx\\Debug\\5ye32306\\x86_64",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "appmodules::@6890427a1f51a3e7e1df": {
+      "artifactName": "appmodules",
+      "abi": "x86_64",
+      "output": "H:\\New folder\\screen-recorder\\android\\app\\build\\intermediates\\cxx\\Debug\\5ye32306\\obj\\x86_64\\libappmodules.so",
+      "runtimeFiles": [
+        "H:\\gradle-home\\caches\\8.11.1\\transforms\\cf5c544d19634655ade86606a2b1ab71\\transformed\\fbjni-0.7.0\\prefab\\modules\\fbjni\\libs\\android.x86_64\\libfbjni.so",
+        "H:\\gradle-home\\caches\\8.11.1\\transforms\\8b2de0ad11b7942faa8d95e2c74d7936\\transformed\\react-android-0.87.1-debug\\prefab\\modules\\jsi\\libs\\android.x86_64\\libjsi.so",
+        "H:\\gradle-home\\caches\\8.11.1\\transforms\\8b2de0ad11b7942faa8d95e2c74d7936\\transformed\\react-android-0.87.1-debug\\prefab\\modules\\reactnative\\libs\\android.x86_64\\libreactnative.so"
+      ]
+    }
+  }
+}

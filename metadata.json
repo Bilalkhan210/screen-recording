@@ -1,0 +1,6 @@
+{
+  "name": "Screen Recorder",
+  "description": "Production-ready Screen Recording application with React Native CLI Android MediaProjection integration.",
+  "requestFramePermissions": ["camera", "microphone", "display-capture"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

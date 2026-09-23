@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Screen Recorder</string>
+    <string name="recording_notification_title">Screen Recording in Progress</string>
+    <string name="recording_notification_text">Capturing your screen and audio…</string>
+    <string name="action_stop_recording">Stop Recording</string>
+    <string name="action_pause_recording">Pause</string>
+    <string name="action_resume_recording">Resume</string>
+</resources>

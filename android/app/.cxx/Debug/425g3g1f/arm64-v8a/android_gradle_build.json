@@ -1,0 +1,42 @@
+{
+  "buildFiles": [
+    "H:\\New folder\\screen-recorder\\node_modules\\react-native\\ReactAndroid\\cmake-utils\\default-app-setup\\CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "C:\\Users\\Bilal khan\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+      "-C",
+      "H:\\New folder\\screen-recorder\\android\\app\\.cxx\\Debug\\425g3g1f\\arm64-v8a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "C:\\Users\\Bilal khan\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+    "-C",
+    "H:\\New folder\\screen-recorder\\android\\app\\.cxx\\Debug\\425g3g1f\\arm64-v8a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "appmodules::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "appmodules",
+      "output": "H:\\New folder\\screen-recorder\\android\\app\\build\\intermediates\\cxx\\Debug\\425g3g1f\\obj\\arm64-v8a\\libappmodules.so",
+      "runtimeFiles": [
+        "C:\\gradle-home\\caches\\8.9\\transforms\\ee33d82cd6f54990475aef4fa43f3929\\transformed\\jetified-fbjni-0.7.0\\prefab\\modules\\fbjni\\libs\\android.arm64-v8a\\libfbjni.so",
+        "C:\\gradle-home\\caches\\8.9\\transforms\\7741d4b6cd7b18f2bdfeab072fff5efc\\transformed\\jetified-react-android-0.87.1-debug\\prefab\\modules\\jsi\\libs\\android.arm64-v8a\\libjsi.so",
+        "C:\\gradle-home\\caches\\8.9\\transforms\\7741d4b6cd7b18f2bdfeab072fff5efc\\transformed\\jetified-react-android-0.87.1-debug\\prefab\\modules\\reactnative\\libs\\android.arm64-v8a\\libreactnative.so"
+      ]
+    }
+  },
+  "toolchains": {
+    "toolchain": {
+      "cCompilerExecutable": "C:\\Users\\Bilal khan\\AppData\\Local\\Android\\Sdk\\ndk\\26.1.10909125\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe",
+      "cppCompilerExecutable": "C:\\Users\\Bilal khan\\AppData\\Local\\Android\\Sdk\\ndk\\26.1.10909125\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe"
+    }
+  },
+  "cFileExtensions": [],
+  "cppFileExtensions": [
+    "cpp"
+  ]
+}

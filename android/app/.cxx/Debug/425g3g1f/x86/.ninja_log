@@ -1,0 +1,11 @@
+# ninja log v5
+12	106	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/425g3g1f/x86/CMakeFiles/cmake.verify_globs	d52d8c811ef235c5
+12533	12755	8111774126636597	H:/New folder/screen-recorder/android/app/build/intermediates/cxx/Debug/425g3g1f/obj/x86/libappmodules.so	66638a6de336fe3a
+1	11429	8111774113286598	CMakeFiles/appmodules.dir/H_/New_folder/screen-recorder/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp.o	30c5ddc97d4ae81
+14	12533	8111774124336695	CMakeFiles/appmodules.dir/OnLoad.cpp.o	5b5756d10e8a5355
+0	14	0	clean	2f79e7a5d3d58b05
+107	2130	8113268516137454	build.ninja	973cab21bea1e4ab
+2	59	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/425g3g1f/x86/CMakeFiles/cmake.verify_globs	d52d8c811ef235c5
+22	27658	8113268793707434	CMakeFiles/appmodules.dir/H_/New_folder/screen-recorder/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp.o	30c5ddc97d4ae81
+36	28959	8113268806657461	CMakeFiles/appmodules.dir/OnLoad.cpp.o	5b5756d10e8a5355
+28960	29457	8113268811777422	H:/New folder/screen-recorder/android/app/build/intermediates/cxx/Debug/425g3g1f/obj/x86/libappmodules.so	66638a6de336fe3a
