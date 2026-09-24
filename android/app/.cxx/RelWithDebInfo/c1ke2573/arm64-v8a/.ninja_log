@@ -1,0 +1,7 @@
+# ninja log v5
+52	804	8119573956012653	build.ninja	cbb1e722f4f2527a
+2	37	0	H:/New folder/screen-recorder/android/app/.cxx/RelWithDebInfo/c1ke2573/arm64-v8a/CMakeFiles/cmake.verify_globs	302c4300a81b268b
+14	11081	8119572835363116	CMakeFiles/appmodules.dir/OnLoad.cpp.o	e3a53e9a498c234c
+26	10066	8119572825203064	CMakeFiles/appmodules.dir/H_/New_folder/screen-recorder/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp.o	180e5a429fa374e8
+11082	11273	8119572837393046	H:/New folder/screen-recorder/android/app/build/intermediates/cxx/RelWithDebInfo/c1ke2573/obj/arm64-v8a/libappmodules.so	4d9bd0c430a0b0eb
+2	95	0	H:/New folder/screen-recorder/android/app/.cxx/RelWithDebInfo/c1ke2573/arm64-v8a/CMakeFiles/cmake.verify_globs	302c4300a81b268b

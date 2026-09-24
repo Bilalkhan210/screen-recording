@@ -4,6 +4,7 @@ import {
   RecordingStartResult,
   RecordingStopResult,
   GallerySaveResult,
+  RecordedItem,
 } from '../types';
 
 const { ScreenRecordModule } = NativeModules;
@@ -97,6 +98,31 @@ export class ScreenRecorderService {
   static async discardRecording(filePath: string): Promise<boolean> {
     if (!ScreenRecordModule) return true;
     return await ScreenRecordModule.discardRecording(filePath);
+  }
+
+  static async listRecordings(): Promise<RecordedItem[]> {
+    if (!ScreenRecordModule) return [];
+    return await ScreenRecordModule.listRecordings();
+  }
+
+  static async deleteGalleryRecording(uri: string): Promise<boolean> {
+    if (!ScreenRecordModule) return false;
+    return await ScreenRecordModule.deleteGalleryRecording(uri);
+  }
+
+  static async renameGalleryRecording(uri: string, displayName: string): Promise<boolean> {
+    if (!ScreenRecordModule) return false;
+    return await ScreenRecordModule.renameGalleryRecording(uri, displayName);
+  }
+
+  static async shareRecording(uri: string): Promise<boolean> {
+    if (!ScreenRecordModule) return false;
+    return await ScreenRecordModule.shareRecording(uri);
+  }
+
+  static async openRecording(uri: string): Promise<boolean> {
+    if (!ScreenRecordModule) return false;
+    return await ScreenRecordModule.openRecording(uri);
   }
 
   /**

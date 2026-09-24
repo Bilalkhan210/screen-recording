@@ -81,6 +81,7 @@ class ScreenRecordService : LifecycleService() {
 
     var onTickListener: ((Long) -> Unit)? = null
     var onStateChangedListener: ((Boolean, Boolean) -> Unit)? = null
+    var onStoppedListener: ((File?, Long) -> Unit)? = null
 
     inner class LocalBinder : Binder() {
         fun getService(): ScreenRecordService = this@ScreenRecordService
@@ -126,7 +127,7 @@ class ScreenRecordService : LifecycleService() {
                     val recordAudio = intent.getBooleanExtra(EXTRA_RECORD_AUDIO, true)
                     val showCamera = intent.getBooleanExtra(EXTRA_SHOW_CAMERA, false)
 
-                    startForegroundWithNotification()
+                    startForegroundWithNotification(showCamera)
                     if (resultData != null && resultCode != 0) {
                         initRecording(resultCode, resultData, width, height, dpi, fps, bitrate, recordAudio)
                         showRecordingControl()
@@ -138,7 +139,11 @@ class ScreenRecordService : LifecycleService() {
                         stopSelf()
                     }
                 }
-                ACTION_STOP -> stopRecording()
+                ACTION_STOP -> {
+                    val durationMillis = getRecordingDuration()
+                    val resultFile = stopRecording()
+                    onStoppedListener?.invoke(resultFile, durationMillis)
+                }
                 ACTION_PAUSE -> pauseRecording()
                 ACTION_RESUME -> resumeRecording()
             }
@@ -182,13 +187,12 @@ class ScreenRecordService : LifecycleService() {
         ShortcutManagerCompat.pushDynamicShortcut(this, shortcut)
     }
 
-    private fun startForegroundWithNotification() {
+    private fun startForegroundWithNotification(showCamera: Boolean) {
         val notification = buildNotification("00:00:00", isPaused = false)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val serviceType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
-            } else {
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+            var serviceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+            if (showCamera && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                serviceType = serviceType or ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
             }
             startForeground(NOTIFICATION_ID, notification, serviceType)
         } else {
@@ -438,6 +442,7 @@ class ScreenRecordService : LifecycleService() {
         mediaProjection = null
         stopForeground(STOP_FOREGROUND_REMOVE)
         removeRecordingControl()
+        removeCameraOverlay()
     }
 
     override fun onDestroy() {
@@ -447,7 +452,12 @@ class ScreenRecordService : LifecycleService() {
 
     fun getRecordingDuration(): Long {
         return if (isRecording) {
-            System.currentTimeMillis() - startTimeMillis - pausedDurationMillis
+            val activePauseMillis = if (isPaused) {
+                System.currentTimeMillis() - pauseTimestampMillis
+            } else {
+                0L
+            }
+            System.currentTimeMillis() - startTimeMillis - pausedDurationMillis - activePauseMillis
         } else 0L
     }
 

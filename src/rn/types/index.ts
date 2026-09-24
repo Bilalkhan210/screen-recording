@@ -1,5 +1,15 @@
 export type VideoQuality = '1080p' | '720p' | '480p' | 'custom';
 
+export type CountdownSeconds = 0 | 3 | 5 | 10;
+
+export interface RecordingSettings {
+  resolution: '1080p' | '720p' | '480p';
+  fps: 60 | 30;
+  bitrate: '12Mbps' | '8Mbps' | '4Mbps';
+  recordAudio: boolean;
+  countdownSeconds: CountdownSeconds;
+}
+
 export interface RecordingOptions {
   width?: number;
   height?: number;

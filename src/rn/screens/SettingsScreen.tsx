@@ -8,18 +8,19 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
+import { RecordingSettings } from '../types';
 
 interface Props {
   onBack: () => void;
   isDarkMode: boolean;
+  settings: RecordingSettings;
+  onSettingsChange: (settings: RecordingSettings) => void;
 }
 
-export const SettingsScreen: React.FC<Props> = ({ onBack, isDarkMode }) => {
-  const [resolution, setResolution] = useState<'1080p' | '720p' | '480p'>('1080p');
-  const [fps, setFps] = useState<60 | 30>(60);
-  const [bitrate, setBitrate] = useState<'12Mbps' | '8Mbps' | '4Mbps'>('8Mbps');
-  const [recordAudio, setRecordAudio] = useState(true);
-  const [countdown, setCountdown] = useState<'3s' | '5s' | 'None'>('3s');
+export const SettingsScreen: React.FC<Props> = ({ onBack, isDarkMode, settings, onSettingsChange }) => {
+  const updateSettings = (change: Partial<RecordingSettings>) => {
+    onSettingsChange({ ...settings, ...change });
+  };
   const [showNotificationControls, setShowNotificationControls] = useState(true);
   const theme = isDarkMode
     ? { screen: '#0B0F19', topBar: '#0F172A', card: '#0F172A', surface: '#1E293B', border: '#1E293B', text: '#F8FAFC', muted: '#94A3B8', subtle: '#64748B' }
@@ -45,13 +46,13 @@ export const SettingsScreen: React.FC<Props> = ({ onBack, isDarkMode }) => {
             {(['1080p', '720p', '480p'] as const).map((res) => (
               <TouchableOpacity
                 key={res}
-                style={[styles.optionBtn, { backgroundColor: theme.surface, borderColor: theme.border }, resolution === res && styles.optionBtnActive]}
-                onPress={() => setResolution(res)}
+                style={[styles.optionBtn, { backgroundColor: theme.surface, borderColor: theme.border }, settings.resolution === res && styles.optionBtnActive]}
+                onPress={() => updateSettings({ resolution: res })}
               >
                 <Text
                   style={[
                     styles.optionBtnText, { color: theme.muted },
-                    resolution === res && styles.optionBtnTextActive,
+                    settings.resolution === res && styles.optionBtnTextActive,
                   ]}
                 >
                   {res}
@@ -67,13 +68,13 @@ export const SettingsScreen: React.FC<Props> = ({ onBack, isDarkMode }) => {
             {([60, 30] as const).map((rate) => (
               <TouchableOpacity
                 key={rate}
-                style={[styles.optionBtn, { backgroundColor: theme.surface, borderColor: theme.border }, fps === rate && styles.optionBtnActive]}
-                onPress={() => setFps(rate)}
+                style={[styles.optionBtn, { backgroundColor: theme.surface, borderColor: theme.border }, settings.fps === rate && styles.optionBtnActive]}
+                onPress={() => updateSettings({ fps: rate })}
               >
                 <Text
                   style={[
                     styles.optionBtnText, { color: theme.muted },
-                    fps === rate && styles.optionBtnTextActive,
+                    settings.fps === rate && styles.optionBtnTextActive,
                   ]}
                 >
                   {rate} FPS
@@ -89,13 +90,13 @@ export const SettingsScreen: React.FC<Props> = ({ onBack, isDarkMode }) => {
             {(['12Mbps', '8Mbps', '4Mbps'] as const).map((b) => (
               <TouchableOpacity
                 key={b}
-                style={[styles.optionBtn, { backgroundColor: theme.surface, borderColor: theme.border }, bitrate === b && styles.optionBtnActive]}
-                onPress={() => setBitrate(b)}
+                style={[styles.optionBtn, { backgroundColor: theme.surface, borderColor: theme.border }, settings.bitrate === b && styles.optionBtnActive]}
+                onPress={() => updateSettings({ bitrate: b })}
               >
                 <Text
                   style={[
                     styles.optionBtnText, { color: theme.muted },
-                    bitrate === b && styles.optionBtnTextActive,
+                    settings.bitrate === b && styles.optionBtnTextActive,
                   ]}
                 >
                   {b}
@@ -116,10 +117,10 @@ export const SettingsScreen: React.FC<Props> = ({ onBack, isDarkMode }) => {
               </Text>
             </View>
             <Switch
-              value={recordAudio}
-              onValueChange={setRecordAudio}
+              value={settings.recordAudio}
+              onValueChange={(recordAudio) => updateSettings({ recordAudio })}
               trackColor={{ false: '#334155', true: '#2563EB' }}
-              thumbColor={recordAudio ? '#FFFFFF' : '#94A3B8'}
+              thumbColor={settings.recordAudio ? '#FFFFFF' : '#94A3B8'}
             />
           </View>
 
@@ -146,19 +147,19 @@ export const SettingsScreen: React.FC<Props> = ({ onBack, isDarkMode }) => {
         <View style={[styles.groupCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.groupLabel, { color: theme.text }]}>Countdown Before Start</Text>
           <View style={styles.optionsRow}>
-            {(['3s', '5s', 'None'] as const).map((c) => (
+            {([{ label: 'Off', value: 0 }, { label: '3s', value: 3 }, { label: '5s', value: 5 }, { label: '10s', value: 10 }] as const).map((c) => (
               <TouchableOpacity
-                key={c}
-                style={[styles.optionBtn, { backgroundColor: theme.surface, borderColor: theme.border }, countdown === c && styles.optionBtnActive]}
-                onPress={() => setCountdown(c)}
+                key={c.value}
+                style={[styles.optionBtn, { backgroundColor: theme.surface, borderColor: theme.border }, settings.countdownSeconds === c.value && styles.optionBtnActive]}
+                onPress={() => updateSettings({ countdownSeconds: c.value })}
               >
                 <Text
                   style={[
                     styles.optionBtnText, { color: theme.muted },
-                    countdown === c && styles.optionBtnTextActive,
+                    settings.countdownSeconds === c.value && styles.optionBtnTextActive,
                   ]}
                 >
-                  {c}
+                  {c.label}
                 </Text>
               </TouchableOpacity>
             ))}

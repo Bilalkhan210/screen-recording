@@ -16,28 +16,27 @@ import { RecordingCompleteModal } from '../components/RecordingCompleteModal';
 import { RecordingOptionsModal } from '../components/RecordingOptionsModal';
 import { ScreenRecorderService } from '../services/ScreenRecorderNative';
 import { requestScreenRecordingPermissions } from '../utils/permissions';
-import { RecordingStopResult } from '../types';
+import { RecordingSettings, RecordingStopResult } from '../types';
 
 interface Props {
   isDarkMode: boolean;
   onToggleTheme: () => void;
   onNavigateToSettings?: () => void;
+  onNavigateToRecordings?: () => void;
+  settings: RecordingSettings;
 }
 
 export const HomeScreen: React.FC<Props> = ({
   isDarkMode,
   onToggleTheme,
   onNavigateToSettings,
+  onNavigateToRecordings,
+  settings,
 }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [timerText, setTimerText] = useState('00:00:00');
   const [elapsedMillis, setElapsedMillis] = useState(0);
-
-  // Settings
-  const [recordAudio, setRecordAudio] = useState(true);
-  const [quality, setQuality] = useState<'1080p' | '720p'>('1080p');
-  const [fps, setFps] = useState<60 | 30>(60);
 
   // Modal
   const [recordingResult, setRecordingResult] = useState<RecordingStopResult | null>(null);
@@ -131,11 +130,30 @@ export const HomeScreen: React.FC<Props> = ({
   const executeStartRecording = async (withAudio: boolean, withCamera: boolean) => {
     try {
       setIsStarting(true);
+      const audioRequested = withAudio && settings.recordAudio;
 
       // 1. Request Android runtime permissions (Notification + Audio + Camera)
-      const perms = await requestScreenRecordingPermissions(withAudio, withCamera);
+      const perms = await requestScreenRecordingPermissions(audioRequested, withCamera);
 
-      if (withCamera) {
+      if (!perms.canNotify) {
+        Alert.alert('Notifications Required', 'Allow notifications so Android can keep the recording service active.');
+        setIsStarting(false);
+        return;
+      }
+
+      if (audioRequested && !perms.canRecordAudio) {
+        Alert.alert('Microphone Permission Required', 'Allow microphone access to record your voice.');
+        setIsStarting(false);
+        return;
+      }
+
+      let requestedShowCamera = withCamera;
+      if (withCamera && !perms.canUseCamera) {
+        requestedShowCamera = false;
+        Alert.alert('Camera Unavailable', 'Camera permission was denied. Recording will continue without the face camera.');
+      }
+
+      if (requestedShowCamera) {
         const hasOverlayPerm = await ScreenRecorderService.checkOverlayPermission();
         if (!hasOverlayPerm) {
           Alert.alert(
@@ -155,18 +173,24 @@ export const HomeScreen: React.FC<Props> = ({
 
       // 2. Start recording with options (triggers Android MediaProjection dialog)
       const options = {
-        width: quality === '1080p' ? 1080 : 720,
-        height: quality === '1080p' ? 1920 : 1280,
-        fps,
-        bitrate: quality === '1080p' ? 8000000 : 4500000,
-        recordAudio: withAudio,
-        showCamera: withCamera,
+        width: settings.resolution === '1080p' ? 1080 : settings.resolution === '720p' ? 720 : 480,
+        height: settings.resolution === '1080p' ? 1920 : settings.resolution === '720p' ? 1280 : 854,
+        fps: settings.fps,
+        bitrate: settings.bitrate === '12Mbps' ? 12000000 : settings.bitrate === '8Mbps' ? 8000000 : 4000000,
+        recordAudio: audioRequested,
+        showCamera: requestedShowCamera,
       };
 
       await ScreenRecorderService.startRecording(options);
 
-      setCountdown(3);
+      if (settings.countdownSeconds > 0) {
+        setCountdown(settings.countdownSeconds);
+      }
       await new Promise<void>((resolve) => {
+        if (settings.countdownSeconds === 0) {
+          resolve();
+          return;
+        }
         countdownTimerRef.current = setInterval(() => {
           setCountdown((current) => {
             if (current === null || current <= 1) {
@@ -250,7 +274,6 @@ export const HomeScreen: React.FC<Props> = ({
     <View style={[styles.screen, { backgroundColor: theme.screen }]}>
       <StatusBar
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={theme.screen}
       />
       {/* Top App Bar */}
       <View style={[styles.topBar, { backgroundColor: theme.topBar, borderBottomColor: theme.border }]}>
@@ -303,29 +326,26 @@ export const HomeScreen: React.FC<Props> = ({
             <View style={styles.pillsRow}>
               {/* Quality Pill */}
               <TouchableOpacity
-                style={[styles.pill, { backgroundColor: theme.surface, borderColor: theme.border }, quality === '1080p' && styles.pillActive]}
-                onPress={() => setQuality(q => q === '1080p' ? '720p' : '1080p')}
+                style={[styles.pill, { backgroundColor: theme.surface, borderColor: theme.border }, settings.resolution === '1080p' && styles.pillActive]}
               >
                 <Text style={[styles.pillLabel, { color: theme.muted }]}>Resolution</Text>
-                <Text style={[styles.pillValue, { color: theme.text }]}>{quality}</Text>
+                <Text style={[styles.pillValue, { color: theme.text }]}>{settings.resolution}</Text>
               </TouchableOpacity>
 
               {/* FPS Pill */}
               <TouchableOpacity
-                style={[styles.pill, { backgroundColor: theme.surface, borderColor: theme.border }, fps === 60 && styles.pillActive]}
-                onPress={() => setFps(f => f === 60 ? 30 : 60)}
+                style={[styles.pill, { backgroundColor: theme.surface, borderColor: theme.border }, settings.fps === 60 && styles.pillActive]}
               >
                 <Text style={[styles.pillLabel, { color: theme.muted }]}>Frame Rate</Text>
-                <Text style={[styles.pillValue, { color: theme.text }]}>{fps} FPS</Text>
+                <Text style={[styles.pillValue, { color: theme.text }]}>{settings.fps} FPS</Text>
               </TouchableOpacity>
 
               {/* Audio Toggle Pill */}
               <TouchableOpacity
-                style={[styles.pill, { backgroundColor: theme.surface, borderColor: theme.border }, recordAudio && styles.pillActive]}
-                onPress={() => setRecordAudio(a => !a)}
+                style={[styles.pill, { backgroundColor: theme.surface, borderColor: theme.border }, settings.recordAudio && styles.pillActive]}
               >
                 <Text style={[styles.pillLabel, { color: theme.muted }]}>Audio</Text>
-                <Text style={[styles.pillValue, { color: theme.text }]}>{recordAudio ? 'Mic On' : 'Muted'}</Text>
+                <Text style={[styles.pillValue, { color: theme.text }]}>{settings.recordAudio ? 'Mic On' : 'Muted'}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -371,6 +391,13 @@ export const HomeScreen: React.FC<Props> = ({
             </View>
           )}
         </View>
+
+        <TouchableOpacity
+          style={[styles.recordingsButton, { backgroundColor: theme.surface, borderColor: theme.border }]}
+          onPress={onNavigateToRecordings}
+        >
+          <Text style={[styles.recordingsButtonText, { color: theme.text }]}>My Recordings</Text>
+        </TouchableOpacity>
 
         {/* Info / Permissions Guide */}
         <View style={[styles.guideCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
@@ -544,6 +571,17 @@ const styles = StyleSheet.create({
   },
   controlsSection: {
     marginBottom: 24,
+  },
+  recordingsButton: {
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  recordingsButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
   },
   mainRecordButton: {
     backgroundColor: '#EF4444',

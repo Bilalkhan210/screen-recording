@@ -38,9 +38,9 @@ export async function requestScreenRecordingPermissions(recordAudio: boolean = t
       ? await ensurePermission('android.permission.POST_NOTIFICATIONS')
       : true;
 
-    if (Platform.Version < 29) {
-      await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE);
-    }
+    const canWriteStorage = Platform.Version < 29
+      ? await ensurePermission(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE)
+      : true;
 
     return {
       granted: canNotify && (!recordAudio || canRecordAudio) && (!useCamera || canUseCamera),

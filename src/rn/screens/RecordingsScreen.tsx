@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,36 +9,20 @@ import {
   Platform,
 } from 'react-native';
 import { RecordedItem } from '../types';
+import { ScreenRecorderService } from '../services/ScreenRecorderNative';
 
 interface Props {
   onBack: () => void;
 }
 
 export const RecordingsScreen: React.FC<Props> = ({ onBack }) => {
-  const [recordings, setRecordings] = useState<RecordedItem[]>([
-    {
-      id: 'rec-sample-1',
-      filePath: '/storage/emulated/0/Movies/ScreenRecordings/ScreenRecording_20260914_001200.mp4',
-      fileName: 'ScreenRecording_20260914_001200.mp4',
-      date: 'Today, 12:00 AM',
-      durationFormatted: '00:01:45',
-      durationMillis: 105000,
-      fileSizeBytes: 18450000,
-      resolution: '1080 × 1920 (60 FPS)',
-      savedToGallery: true,
-    },
-    {
-      id: 'rec-sample-2',
-      filePath: '/storage/emulated/0/Movies/ScreenRecordings/ScreenRecording_20260913_184520.mp4',
-      fileName: 'ScreenRecording_20260913_184520.mp4',
-      date: 'Yesterday, 06:45 PM',
-      durationFormatted: '00:03:12',
-      durationMillis: 192000,
-      fileSizeBytes: 34200000,
-      resolution: '1080 × 1920 (60 FPS)',
-      savedToGallery: true,
-    },
-  ]);
+  const [recordings, setRecordings] = useState<RecordedItem[]>([]);
+
+  useEffect(() => {
+    ScreenRecorderService.listRecordings()
+      .then(setRecordings)
+      .catch(() => setRecordings([]));
+  }, []);
 
   const handleDelete = (id: string, fileName: string) => {
     Alert.alert(
@@ -50,15 +34,28 @@ export const RecordingsScreen: React.FC<Props> = ({ onBack }) => {
           text: 'Delete',
           style: 'destructive',
           onPress: () => {
-            setRecordings(prev => prev.filter(r => r.id !== id));
+            ScreenRecorderService.deleteGalleryRecording(id)
+              .then((deleted) => {
+                if (deleted) setRecordings(prev => prev.filter(r => r.id !== id));
+                else Alert.alert('Delete Failed', 'The recording could not be deleted.');
+              })
+              .catch(() => Alert.alert('Delete Failed', 'The recording could not be deleted.'));
           },
         },
       ]
     );
   };
 
-  const handleShare = (fileName: string) => {
-    Alert.alert('Share Video', `Opening Android share sheet for ${fileName}`);
+  const handleShare = (item: RecordedItem) => {
+    ScreenRecorderService.shareRecording(item.filePath).catch(() => {
+      Alert.alert('Share Failed', `Could not share ${item.fileName}.`);
+    });
+  };
+
+  const handleOpen = (item: RecordedItem) => {
+    ScreenRecorderService.openRecording(item.filePath).catch(() => {
+      Alert.alert('Playback Unavailable', 'No compatible video player is available on this device.');
+    });
   };
 
   return (
@@ -118,7 +115,13 @@ export const RecordingsScreen: React.FC<Props> = ({ onBack }) => {
               <View style={styles.actionsRow}>
                 <TouchableOpacity
                   style={styles.actionBtnSecondary}
-                  onPress={() => handleShare(item.fileName)}
+                  onPress={() => handleOpen(item)}
+                >
+                  <Text style={styles.actionBtnText}>Play</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.actionBtnSecondary}
+                  onPress={() => handleShare(item)}
                 >
                   <Text style={styles.actionBtnText}>Share</Text>
                 </TouchableOpacity>

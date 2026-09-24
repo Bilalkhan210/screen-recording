@@ -41,6 +41,7 @@ interface SavedRecording {
 
 export default function App() {
   // Navigation
+  const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState<'app' | 'code' | 'commands'>('app');
   const [viewMode, setViewMode] = useState<'phone' | 'fluid'>('phone');
   const [currentScreen, setCurrentScreen] = useState<'home' | 'gallery' | 'settings'>('home');
@@ -56,6 +57,11 @@ export default function App() {
   const [bitrate, setBitrate] = useState<'12Mbps' | '8Mbps' | '4Mbps'>('8Mbps');
   const [countdown, setCountdown] = useState<'3s' | 'None'>('None');
   const [countdownValue, setCountdownValue] = useState<number | null>(null);
+
+  useEffect(() => {
+    const splashTimer = window.setTimeout(() => setShowSplash(false), 5000);
+    return () => window.clearTimeout(splashTimer);
+  }, []);
 
   // Recording Complete Modal
   const [showCompleteModal, setShowCompleteModal] = useState(false);
@@ -99,6 +105,18 @@ export default function App() {
   const streamRef = useRef<MediaStream | null>(null);
   const timerIntervalRef = useRef<number | null>(null);
   const canvasAnimRef = useRef<number | null>(null);
+
+  if (showSplash) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0B0F19] text-white">
+        <div className="w-20 h-20 rounded-3xl bg-red-500/15 border border-red-500/30 flex items-center justify-center shadow-lg shadow-red-500/10 animate-pulse">
+          <div className="w-8 h-8 rounded-full bg-red-500" />
+        </div>
+        <h1 className="mt-6 text-2xl font-bold tracking-tight">Screen Recorder</h1>
+        <p className="mt-2 text-sm text-slate-400">Preparing your recording studio...</p>
+      </div>
+    );
+  }
 
   // Format timer
   const formatTime = (totalSecs: number) => {

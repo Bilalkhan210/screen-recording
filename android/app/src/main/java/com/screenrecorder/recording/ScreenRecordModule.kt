@@ -2,13 +2,17 @@ package com.screenrecorder.recording
 
 import android.app.Activity
 import android.content.ComponentName
+import android.content.ContentUris
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.os.IBinder
+import android.provider.MediaStore
 import android.provider.Settings
 import android.util.DisplayMetrics
 import android.util.Log
@@ -63,6 +67,20 @@ class ScreenRecordModule(private val reactContext: ReactApplicationContext) :
                     putBoolean("isPaused", paused)
                 }
                 sendEvent("onStateChanged", map)
+            }
+
+            recordService?.onStoppedListener = { videoFile, durationMillis ->
+                if (videoFile != null && videoFile.exists()) {
+                    val result = Arguments.createMap().apply {
+                        putString("filePath", videoFile.absolutePath)
+                        putString("fileName", videoFile.name)
+                        putDouble("durationMillis", durationMillis.toDouble())
+                        putDouble("fileSize", videoFile.length().toDouble())
+                        putInt("width", targetWidth)
+                        putInt("height", targetHeight)
+                    }
+                    sendEvent("onRecordingStopped", result)
+                }
             }
 
             pendingStopPromise?.let { promise ->
@@ -358,6 +376,137 @@ class ScreenRecordModule(private val reactContext: ReactApplicationContext) :
             }
         } catch (e: Exception) {
             promise.reject("ERR_DISCARD", "Failed to discard recording: ${e.message}")
+        }
+    }
+
+    @ReactMethod
+    fun listRecordings(promise: Promise) {
+        try {
+            val resolver = reactContext.contentResolver
+            val collection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+            } else {
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+            }
+            val projection = arrayOf(
+                MediaStore.Video.Media._ID,
+                MediaStore.Video.Media.DISPLAY_NAME,
+                MediaStore.Video.Media.DATE_ADDED,
+                MediaStore.Video.Media.DURATION,
+                MediaStore.Video.Media.SIZE,
+                MediaStore.Video.Media.WIDTH,
+                MediaStore.Video.Media.HEIGHT
+            )
+            val selection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                "${MediaStore.Video.Media.RELATIVE_PATH} LIKE ?"
+            } else {
+                "${MediaStore.Video.Media.DISPLAY_NAME} LIKE ?"
+            }
+            val selectionArgs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                arrayOf("${Environment.DIRECTORY_MOVIES}/ScreenRecordings/%")
+            } else {
+                arrayOf("ScreenRecording_%")
+            }
+            val sortOrder = "${MediaStore.Video.Media.DATE_ADDED} DESC"
+            val recordings = Arguments.createArray()
+
+            resolver.query(collection, projection, selection, selectionArgs, sortOrder)?.use { cursor ->
+                val idIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
+                val nameIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
+                val dateIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
+                val durationIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
+                val sizeIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
+                val widthIndex = cursor.getColumnIndex(MediaStore.Video.Media.WIDTH)
+                val heightIndex = cursor.getColumnIndex(MediaStore.Video.Media.HEIGHT)
+
+                while (cursor.moveToNext()) {
+                    val id = cursor.getLong(idIndex)
+                    val uri = ContentUris.withAppendedId(collection, id)
+                    val width = if (widthIndex >= 0) cursor.getInt(widthIndex) else 0
+                    val height = if (heightIndex >= 0) cursor.getInt(heightIndex) else 0
+                    val durationMillis = cursor.getLong(durationIndex)
+                    val totalSeconds = durationMillis / 1000L
+                    val durationFormatted = String.format(
+                        Locale.getDefault(),
+                        "%02d:%02d:%02d",
+                        totalSeconds / 3600L,
+                        (totalSeconds % 3600L) / 60L,
+                        totalSeconds % 60L
+                    )
+                    val date = SimpleDateFormat("MMM d, yyyy h:mm a", Locale.getDefault())
+                        .format(Date(cursor.getLong(dateIndex) * 1000L))
+                    recordings.pushMap(Arguments.createMap().apply {
+                        putString("id", uri.toString())
+                        putString("filePath", uri.toString())
+                        putString("fileName", cursor.getString(nameIndex))
+                        putString("date", date)
+                        putString("durationFormatted", durationFormatted)
+                        putDouble("durationMillis", durationMillis.toDouble())
+                        putDouble("fileSizeBytes", cursor.getLong(sizeIndex).toDouble())
+                        putString("resolution", if (width > 0 && height > 0) "$width x $height" else "Unknown")
+                        putBoolean("savedToGallery", true)
+                    })
+                }
+            }
+            promise.resolve(recordings)
+        } catch (e: Exception) {
+            promise.reject("ERR_LIST_RECORDINGS", "Could not load saved recordings: ${e.message}")
+        }
+    }
+
+    @ReactMethod
+    fun deleteGalleryRecording(uriString: String, promise: Promise) {
+        try {
+            promise.resolve(reactContext.contentResolver.delete(Uri.parse(uriString), null, null) > 0)
+        } catch (e: Exception) {
+            promise.reject("ERR_DELETE_RECORDING", "Could not delete recording: ${e.message}")
+        }
+    }
+
+    @ReactMethod
+    fun renameGalleryRecording(uriString: String, displayName: String, promise: Promise) {
+        val baseName = displayName.trim().removeSuffix(".mp4")
+        if (baseName.isBlank() || baseName.length > 100 || baseName.any { it in "\\/:*?\"<>|" }) {
+            promise.reject("ERR_INVALID_NAME", "Use a valid recording name without special characters")
+            return
+        }
+        try {
+            val values = ContentValues().apply {
+                put(MediaStore.Video.Media.DISPLAY_NAME, "$baseName.mp4")
+            }
+            promise.resolve(reactContext.contentResolver.update(Uri.parse(uriString), values, null, null) > 0)
+        } catch (e: Exception) {
+            promise.reject("ERR_RENAME_RECORDING", "Could not rename recording: ${e.message}")
+        }
+    }
+
+    @ReactMethod
+    fun shareRecording(uriString: String, promise: Promise) {
+        try {
+            val uri = Uri.parse(uriString)
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "video/mp4"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            reactContext.currentActivity?.startActivity(Intent.createChooser(shareIntent, "Share recording"))
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("ERR_SHARE_RECORDING", "Could not open the share sheet: ${e.message}")
+        }
+    }
+
+    @ReactMethod
+    fun openRecording(uriString: String, promise: Promise) {
+        try {
+            val viewIntent = Intent(Intent.ACTION_VIEW, Uri.parse(uriString)).apply {
+                type = "video/mp4"
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            reactContext.currentActivity?.startActivity(viewIntent)
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("ERR_OPEN_RECORDING", "No compatible video player is available")
         }
     }
 
