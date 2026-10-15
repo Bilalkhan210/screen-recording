@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 node_modules/
 build/
 dist/
@@ -13,3 +14,20 @@ android/app/build/
 
 *.keystore
 *.jks
+=======
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+!.env.example
+android/.gradle/
+android/build/
+android/app/build/
+
+
+*.keystore
+*.jks
+config.bat
+>>>>>>> 637e7bde570a9d6c621fcdfd3aaa58333566c5f1
