@@ -47,5 +47,12 @@
             android:exported="false"
             android:foregroundServiceType="mediaProjection|camera" />
 
+        <!-- Background Camera Recording Foreground Service -->
+        <service
+            android:name=".recording.CameraRecordService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="camera|microphone" />
+
     </application>
 </manifest>

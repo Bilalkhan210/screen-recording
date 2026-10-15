@@ -1,13 +1,12 @@
 # ninja log v5
-386	7451	8119571365486248	build.ninja	7f753a5e6a4f5951
-3	501	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/x86/CMakeFiles/cmake.verify_globs	a42f4cef1c8f25e6
-39	19353	8119568540815204	CMakeFiles/appmodules.dir/OnLoad.cpp.o	d0923764f1fb5a0c
-20	18137	8119568528985170	CMakeFiles/appmodules.dir/H_/New_folder/screen-recorder/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp.o	5960d004e9aaf90e
-19354	19935	8119568547015147	H:/New folder/screen-recorder/android/app/build/intermediates/cxx/Debug/5ye32306/obj/x86/libappmodules.so	37e5c27d7bf3d1a8
-0	13	0	clean	2f79e7a5d3d58b05
-2	56	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/x86/CMakeFiles/cmake.verify_globs	a42f4cef1c8f25e6
-32	10334	8119571470866213	CMakeFiles/appmodules.dir/H_/New_folder/screen-recorder/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp.o	5960d004e9aaf90e
 19	11182	8119571479426294	CMakeFiles/appmodules.dir/OnLoad.cpp.o	d0923764f1fb5a0c
-11182	11406	8119571481736239	H:/New folder/screen-recorder/android/app/build/intermediates/cxx/Debug/5ye32306/obj/x86/libappmodules.so	37e5c27d7bf3d1a8
-7	411	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/x86/CMakeFiles/cmake.verify_globs	a42f4cef1c8f25e6
 2	41	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/x86/CMakeFiles/cmake.verify_globs	a42f4cef1c8f25e6
+386	7451	8122781411996297	build.ninja	7f753a5e6a4f5951
+32	10334	8119571470866213	CMakeFiles/appmodules.dir/H_/New_folder/screen-recorder/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp.o	5960d004e9aaf90e
+11182	11406	8119571481736239	H:/New folder/screen-recorder/android/app/build/intermediates/cxx/Debug/5ye32306/obj/x86/libappmodules.so	37e5c27d7bf3d1a8
+0	13	0	clean	2f79e7a5d3d58b05
+2	41	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/x86/CMakeFiles/cmake.verify_globs	a42f4cef1c8f25e6
+3	103	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/x86/CMakeFiles/cmake.verify_globs	a42f4cef1c8f25e6
+4	78	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/x86/CMakeFiles/cmake.verify_globs	a42f4cef1c8f25e6
+3	67	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/x86/CMakeFiles/cmake.verify_globs	a42f4cef1c8f25e6
+2	85	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/x86/CMakeFiles/cmake.verify_globs	a42f4cef1c8f25e6

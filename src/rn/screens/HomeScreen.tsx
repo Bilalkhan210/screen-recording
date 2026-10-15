@@ -15,8 +15,9 @@ import { RecordingTimer } from '../components/RecordingTimer';
 import { RecordingCompleteModal } from '../components/RecordingCompleteModal';
 import { RecordingOptionsModal } from '../components/RecordingOptionsModal';
 import { ScreenRecorderService } from '../services/ScreenRecorderNative';
+import { CameraRecorderService } from '../services/CameraRecorderNative';
 import { requestScreenRecordingPermissions } from '../utils/permissions';
-import { RecordingSettings, RecordingStopResult } from '../types';
+import { RecordingSettings, RecordingStopResult, CameraFacing } from '../types';
 
 interface Props {
   isDarkMode: boolean;
@@ -45,6 +46,14 @@ export const HomeScreen: React.FC<Props> = ({
   const [isStarting, setIsStarting] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Background Camera Recording state
+  const [isCameraRecording, setIsCameraRecording] = useState(false);
+  const [isCameraPaused, setIsCameraPaused] = useState(false);
+  const [cameraTimerText, setCameraTimerText] = useState('00:00:00');
+  const [cameraFacing, setCameraFacing] = useState<CameraFacing>('back');
+  const [cameraRecordAudio, setCameraRecordAudio] = useState(true);
+  const [isCameraStarting, setIsCameraStarting] = useState(false);
 
   // Listen to native module events
   useEffect(() => {
@@ -81,11 +90,47 @@ export const HomeScreen: React.FC<Props> = ({
       setIsRecording(recording);
     }).catch(() => {});
 
+    // Background Camera Recording listeners
+    const camTimerSub = CameraRecorderService.addCameraTimerListener((data) => {
+      setCameraTimerText(data.formattedTime);
+    });
+
+    const camStateSub = CameraRecorderService.addCameraStateListener((data) => {
+      setIsCameraRecording(data.isRecording);
+      setIsCameraPaused(data.isPaused);
+      if (!data.isRecording) {
+        setCameraTimerText('00:00:00');
+      }
+    });
+
+    const camStopSub = CameraRecorderService.addCameraStopListener((data) => {
+      setIsCameraRecording(false);
+      setIsCameraPaused(false);
+      if (data.galleryUri) {
+        Alert.alert(
+          'Camera Video Saved!',
+          `Background camera recording saved automatically to your device Gallery!\n\nDuration: ${Math.round(data.durationMillis / 1000)}s\nSize: ${(data.fileSize / (1024 * 1024)).toFixed(1)} MB`
+        );
+      } else if (data.filePath) {
+        Alert.alert(
+          'Recording Saved',
+          'Background camera recording completed and saved to storage.'
+        );
+      }
+    });
+
+    CameraRecorderService.isCameraRecording().then((recording) => {
+      setIsCameraRecording(recording);
+    }).catch(() => {});
+
     return () => {
       timerSub.remove();
       stateSub.remove();
       stopSub.remove();
       overlayStopSub.remove();
+      camTimerSub.remove();
+      camStateSub.remove();
+      camStopSub.remove();
       if (countdownTimerRef.current) {
         clearInterval(countdownTimerRef.current);
       }
@@ -246,6 +291,67 @@ export const HomeScreen: React.FC<Props> = ({
     }
   };
 
+  const handleStartCameraRecording = async () => {
+    if (isRecording) {
+      Alert.alert('Screen Recording Active', 'Please stop screen recording before starting background camera recording.');
+      return;
+    }
+    try {
+      setIsCameraStarting(true);
+      const perms = await requestScreenRecordingPermissions(cameraRecordAudio, true);
+
+      if (!perms.canNotify) {
+        Alert.alert('Notifications Required', 'Allow notification permission for the background camera service.');
+        setIsCameraStarting(false);
+        return;
+      }
+
+      if (!perms.canUseCamera) {
+        Alert.alert('Camera Permission Required', 'Camera access is required for background camera recording.');
+        setIsCameraStarting(false);
+        return;
+      }
+
+      if (cameraRecordAudio && !perms.canRecordAudio) {
+        Alert.alert('Microphone Permission Required', 'Microphone access is required when audio recording is enabled.');
+        setIsCameraStarting(false);
+        return;
+      }
+
+      await CameraRecorderService.startCameraRecording({
+        facing: cameraFacing,
+        recordAudio: cameraRecordAudio,
+      });
+
+      setIsCameraRecording(true);
+      setIsCameraPaused(false);
+      setIsCameraStarting(false);
+    } catch (error: any) {
+      setIsCameraStarting(false);
+      Alert.alert('Camera Recording Error', error?.message || 'Failed to start camera recording');
+    }
+  };
+
+  const handleStopCameraRecording = async () => {
+    try {
+      await CameraRecorderService.stopCameraRecording();
+      setIsCameraRecording(false);
+      setIsCameraPaused(false);
+    } catch (error: any) {
+      Alert.alert('Error Stopping Camera', error?.message || 'Failed to stop camera recording');
+    }
+  };
+
+  const handleToggleCameraPause = async () => {
+    if (isCameraPaused) {
+      await CameraRecorderService.resumeCameraRecording();
+      setIsCameraPaused(false);
+    } else {
+      await CameraRecorderService.pauseCameraRecording();
+      setIsCameraPaused(true);
+    }
+  };
+
   const theme = isDarkMode
     ? {
         screen: '#0B0F19',
@@ -387,6 +493,120 @@ export const HomeScreen: React.FC<Props> = ({
               >
                 <View style={styles.stopIconSquare} />
                 <Text style={styles.stopButtonText}>Stop Recording</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        {/* Background Camera Recording Card */}
+        <View style={[styles.cameraCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <View style={styles.cameraCardHeader}>
+            <View style={styles.cameraBadge}>
+              <Text style={styles.cameraBadgeIcon}>📷</Text>
+            </View>
+            <View style={styles.cameraTitleCol}>
+              <Text style={[styles.cameraCardTitle, { color: theme.text }]}>Background Camera Recording</Text>
+              <Text style={[styles.cameraCardSubtitle, { color: theme.subtle }]}>
+                Records in background & screen lock via CameraX service
+              </Text>
+            </View>
+          </View>
+
+          {isCameraRecording ? (
+            <View style={styles.cameraActiveContainer}>
+              <View style={styles.cameraTimerDisplay}>
+                <View style={[styles.recordingDot, isCameraPaused && styles.pausedDot]} />
+                <Text style={[styles.cameraTimerText, { color: theme.text }]}>
+                  {cameraTimerText}
+                </Text>
+                <Text style={[styles.cameraStateText, { color: theme.muted }]}>
+                  {isCameraPaused ? 'PAUSED' : 'REC'}
+                </Text>
+              </View>
+
+              <View style={styles.activeControlsRow}>
+                <TouchableOpacity
+                  style={[styles.pauseButton, { backgroundColor: theme.surface, borderColor: theme.border }]}
+                  onPress={handleToggleCameraPause}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.controlIconText}>{isCameraPaused ? '▶' : '⏸'}</Text>
+                  <Text style={[styles.pauseButtonText, { color: theme.text }]}>
+                    {isCameraPaused ? 'Resume' : 'Pause'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.stopButton}
+                  onPress={handleStopCameraRecording}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.stopIconSquare} />
+                  <Text style={styles.stopButtonText}>Stop Camera</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.cameraConfigContainer}>
+              <View style={styles.cameraOptionsRow}>
+                {/* Lens Selector */}
+                <View style={styles.cameraOptionGroup}>
+                  <Text style={[styles.pillLabel, { color: theme.muted }]}>Camera Lens</Text>
+                  <View style={styles.lensPillsRow}>
+                    <TouchableOpacity
+                      style={[
+                        styles.lensPill,
+                        { backgroundColor: theme.surface, borderColor: theme.border },
+                        cameraFacing === 'back' && styles.pillActive,
+                      ]}
+                      onPress={() => setCameraFacing('back')}
+                    >
+                      <Text style={[styles.lensPillText, { color: cameraFacing === 'back' ? '#60A5FA' : theme.muted }]}>
+                        📷 Rear
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.lensPill,
+                        { backgroundColor: theme.surface, borderColor: theme.border },
+                        cameraFacing === 'front' && styles.pillActive,
+                      ]}
+                      onPress={() => setCameraFacing('front')}
+                    >
+                      <Text style={[styles.lensPillText, { color: cameraFacing === 'front' ? '#60A5FA' : theme.muted }]}>
+                        🤳 Front
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Audio Toggle */}
+                <View style={styles.cameraOptionGroup}>
+                  <Text style={[styles.pillLabel, { color: theme.muted }]}>Audio</Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.audioTogglePill,
+                      { backgroundColor: theme.surface, borderColor: theme.border },
+                      cameraRecordAudio && styles.pillActive,
+                    ]}
+                    onPress={() => setCameraRecordAudio((prev) => !prev)}
+                  >
+                    <Text style={[styles.lensPillText, { color: cameraRecordAudio ? '#60A5FA' : theme.muted }]}>
+                      {cameraRecordAudio ? '🎙️ Mic On' : '🔇 Muted'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={styles.cameraRecordButton}
+                onPress={handleStartCameraRecording}
+                disabled={isCameraStarting}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.cameraRecordButtonText}>
+                  {isCameraStarting ? 'Starting Camera…' : 'Start Camera Recording'}
+                </Text>
               </TouchableOpacity>
             </View>
           )}
@@ -720,5 +940,126 @@ const styles = StyleSheet.create({
     fontSize: 112,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
+  },
+  cameraCard: {
+    backgroundColor: '#0F172A',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    padding: 20,
+    marginBottom: 24,
+  },
+  cameraCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  cameraBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.3)',
+  },
+  cameraBadgeIcon: {
+    fontSize: 20,
+  },
+  cameraTitleCol: {
+    flex: 1,
+  },
+  cameraCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  cameraCardSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  cameraConfigContainer: {
+    gap: 16,
+  },
+  cameraOptionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cameraOptionGroup: {
+    flex: 1,
+  },
+  lensPillsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 4,
+  },
+  lensPill: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  lensPillText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  audioTogglePill: {
+    marginTop: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  cameraRecordButton: {
+    backgroundColor: '#2563EB',
+    borderRadius: 16,
+    paddingVertical: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  cameraRecordButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  cameraActiveContainer: {
+    gap: 16,
+  },
+  cameraTimerDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1E293B',
+    borderRadius: 16,
+    paddingVertical: 12,
+    gap: 10,
+  },
+  cameraTimerText: {
+    fontSize: 24,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+  },
+  cameraStateText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  recordingDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#EF4444',
+  },
+  pausedDot: {
+    backgroundColor: '#F59E0B',
   },
 });

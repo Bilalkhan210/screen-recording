@@ -60,3 +60,17 @@ export interface RecordingState {
   durationMillis: number;
   formattedTime: string;
 }
+
+export type CameraFacing = 'front' | 'back';
+
+export interface CameraRecordingOptions {
+  facing?: CameraFacing;
+  recordAudio?: boolean;
+}
+
+export interface CameraRecordingStopResult {
+  galleryUri: string;
+  filePath: string;
+  durationMillis: number;
+  fileSize: number;
+}

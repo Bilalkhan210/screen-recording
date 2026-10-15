@@ -9,7 +9,10 @@ import com.facebook.react.uimanager.ViewManager
 
 class ScreenRecordPackage : ReactPackage {
     override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
-        return listOf(ScreenRecordModule(reactContext))
+        return listOf(
+            ScreenRecordModule(reactContext),
+            CameraRecordModule(reactContext)
+        )
     }
 
     override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<View, ReactShadowNode<*>>> {
