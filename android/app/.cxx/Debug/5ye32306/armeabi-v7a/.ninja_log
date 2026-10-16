@@ -1,14 +1,10 @@
 # ninja log v5
-1	44	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/armeabi-v7a/CMakeFiles/cmake.verify_globs	79aa200fa90346e
+137	462	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/armeabi-v7a/CMakeFiles/cmake.verify_globs	79aa200fa90346e
 26	9510	8119571334976233	CMakeFiles/appmodules.dir/H_/New_folder/screen-recorder/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp.o	64d7842eac60c829
+147	1378	8138486901270765	build.ninja	3694eadd513c686c
 15	10432	8119571344196277	CMakeFiles/appmodules.dir/OnLoad.cpp.o	864f1192bc462761
-147	1378	8122781387816324	build.ninja	3694eadd513c686c
 10432	10652	8119571346456230	H:/New folder/screen-recorder/android/app/build/intermediates/cxx/Debug/5ye32306/obj/armeabi-v7a/libappmodules.so	b5549576b71a5ad4
-0	15	0	clean	2f79e7a5d3d58b05
-2	41	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/armeabi-v7a/CMakeFiles/cmake.verify_globs	79aa200fa90346e
-3	81	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/armeabi-v7a/CMakeFiles/cmake.verify_globs	79aa200fa90346e
-3	72	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/armeabi-v7a/CMakeFiles/cmake.verify_globs	79aa200fa90346e
-4	62	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/armeabi-v7a/CMakeFiles/cmake.verify_globs	79aa200fa90346e
-2	284	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/armeabi-v7a/CMakeFiles/cmake.verify_globs	79aa200fa90346e
-2	46	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/armeabi-v7a/CMakeFiles/cmake.verify_globs	79aa200fa90346e
 1	14	0	clean	2f79e7a5d3d58b05
+462	8220	8138486901270765	build.ninja	3694eadd513c686c
+2	121	0	H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/armeabi-v7a/CMakeFiles/cmake.verify_globs	79aa200fa90346e
+0	54	0	clean	3c6ed21b3ff98111
