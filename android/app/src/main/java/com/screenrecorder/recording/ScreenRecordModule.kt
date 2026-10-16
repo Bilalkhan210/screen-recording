@@ -130,27 +130,32 @@ class ScreenRecordModule(private val reactContext: ReactApplicationContext) :
 
         pendingStartPromise = promise
 
-        // Parse options
+        // Parse options & calculate aspect-ratio matched dimensions (capped at 1080p width for Google Pixel / Tensor H.264 encoder stability)
         val wm = reactContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val metrics = DisplayMetrics()
         @Suppress("DEPRECATION")
         wm.defaultDisplay.getRealMetrics(metrics)
 
-        targetWidth = if (options?.hasKey("width") == true) options.getInt("width") else metrics.widthPixels
-        targetHeight = if (options?.hasKey("height") == true) options.getInt("height") else metrics.heightPixels
+        val realWidth = metrics.widthPixels
+        val realHeight = metrics.heightPixels
+        val reqWidth = if (options?.hasKey("width") == true) options.getInt("width") else realWidth
 
-        // Cap to device dimensions to prevent encoder crashes on mid-range devices
-        if (targetWidth > metrics.widthPixels) targetWidth = metrics.widthPixels
-        if (targetHeight > metrics.heightPixels) targetHeight = metrics.heightPixels
+        var calcWidth = reqWidth.coerceAtMost(1080)
+        if (calcWidth > realWidth) calcWidth = realWidth
+
+        val aspectRatio = if (realWidth > 0) realHeight.toDouble() / realWidth.toDouble() else 1.7777777777777777
+        val calcHeight = (calcWidth * aspectRatio).toInt()
+
+        // Align dimensions to 16 pixels for H.264 hardware encoder compatibility
+        targetWidth = (calcWidth / 16) * 16
+        targetHeight = (calcHeight / 16) * 16
+        if (targetWidth <= 0) targetWidth = 720
+        if (targetHeight <= 0) targetHeight = 1280
 
         targetFps = if (options?.hasKey("fps") == true) options.getInt("fps") else 60
         targetBitrate = if (options?.hasKey("bitrate") == true) options.getInt("bitrate") else 8000000
         targetRecordAudio = if (options?.hasKey("recordAudio") == true) options.getBoolean("recordAudio") else true
         targetShowCamera = if (options?.hasKey("showCamera") == true) options.getBoolean("showCamera") else false
-
-        // Ensure even dimensions for H.264 encoder
-        if (targetWidth % 2 != 0) targetWidth -= 1
-        if (targetHeight % 2 != 0) targetHeight -= 1
 
         val projectionManager = reactContext.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         val captureIntent = projectionManager.createScreenCaptureIntent()

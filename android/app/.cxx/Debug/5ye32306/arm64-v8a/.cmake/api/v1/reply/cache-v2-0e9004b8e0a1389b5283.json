@@ -11,7 +11,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "x86"
+			"value" : "arm64-v8a"
 		},
 		{
 			"name" : "ANDROID_NDK",
@@ -99,7 +99,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "x86"
+			"value" : "arm64-v8a"
 		},
 		{
 			"name" : "CMAKE_ANDROID_NDK",
@@ -187,7 +187,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "h:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/x86"
+			"value" : "h:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/arm64-v8a"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -659,7 +659,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "H:\\New folder\\screen-recorder\\android\\app\\.cxx\\Debug\\5ye32306\\prefab\\x86\\prefab"
+			"value" : "H:\\New folder\\screen-recorder\\android\\app\\.cxx\\Debug\\5ye32306\\prefab\\arm64-v8a\\prefab"
 		},
 		{
 			"name" : "CMAKE_GENERATOR",
@@ -755,7 +755,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "H:\\New folder\\screen-recorder\\android\\app\\build\\intermediates\\cxx\\Debug\\5ye32306\\obj\\x86"
+			"value" : "H:\\New folder\\screen-recorder\\android\\app\\build\\intermediates\\cxx\\Debug\\5ye32306\\obj\\arm64-v8a"
 		},
 		{
 			"name" : "CMAKE_LINKER",
@@ -783,7 +783,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "C:/Users/Bilal khan/AppData/Local/Android/Sdk/cmake/3.22.1/bin/ninja.exe"
+			"value" : "C:/Users/BILALK~1/AppData/Local/Android/Sdk/cmake/322~1.1/bin/ninja.exe"
 		},
 		{
 			"name" : "CMAKE_MODULE_LINKER_FLAGS",
@@ -1027,7 +1027,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "H:\\New folder\\screen-recorder\\android\\app\\build\\intermediates\\cxx\\Debug\\5ye32306\\obj\\x86"
+			"value" : "H:\\New folder\\screen-recorder\\android\\app\\build\\intermediates\\cxx\\Debug\\5ye32306\\obj\\arm64-v8a"
 		},
 		{
 			"name" : "CMAKE_SHARED_LINKER_FLAGS",
@@ -1335,7 +1335,7 @@
 				}
 			],
 			"type" : "PATH",
-			"value" : "H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/prefab/x86/prefab/lib/i686-linux-android/cmake/ReactAndroid"
+			"value" : "H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/prefab/arm64-v8a/prefab/lib/aarch64-linux-android/cmake/ReactAndroid"
 		},
 		{
 			"name" : "appmodules_BINARY_DIR",
@@ -1347,7 +1347,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/x86"
+			"value" : "H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/arm64-v8a"
 		},
 		{
 			"name" : "appmodules_IS_TOP_LEVEL",
@@ -1383,7 +1383,7 @@
 				}
 			],
 			"type" : "PATH",
-			"value" : "H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/prefab/x86/prefab/lib/i686-linux-android/cmake/fbjni"
+			"value" : "H:/New folder/screen-recorder/android/app/.cxx/Debug/5ye32306/prefab/arm64-v8a/prefab/lib/aarch64-linux-android/cmake/fbjni"
 		}
 	],
 	"kind" : "cache",

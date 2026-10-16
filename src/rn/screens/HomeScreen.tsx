@@ -194,22 +194,32 @@ export const HomeScreen: React.FC<Props> = ({
 
       let requestedShowCamera = withCamera;
       if (withCamera && !perms.canUseCamera) {
-        requestedShowCamera = false;
-        Alert.alert('Camera Unavailable', 'Camera permission was denied. Recording will continue without the face camera.');
+        Alert.alert('Camera Permission Required', 'Allow camera access to display the face camera overlay bubble.');
+        setIsStarting(false);
+        return;
       }
 
       if (requestedShowCamera) {
         const hasOverlayPerm = await ScreenRecorderService.checkOverlayPermission();
         if (!hasOverlayPerm) {
           Alert.alert(
-            'Floating Bubble Permission',
-            'To show the camera bubble over other apps, you need to allow "Display over other apps" in Android settings.',
+            'Floating Camera Bubble Permission',
+            'On Google Pixel (Android 14/15/17), if "Display over other apps" shows "Restricted setting / Denied":\n\n1. Open Phone Settings ⚙ -> Apps -> Screen Recorder\n2. Tap 3 Dots (⋮) in top right corner\n3. Tap "Allow restricted settings"\n4. Now turn ON "Allow display over other apps"\n\nOr you can record Screen + Voice directly without camera bubble.',
             [
-              { text: 'Cancel', style: 'cancel', onPress: () => setIsStarting(false) },
-              { text: 'Enable Now', onPress: () => {
-                setIsStarting(false);
-                ScreenRecorderService.requestOverlayPermission();
-              }}
+              {
+                text: 'Record Screen + Voice',
+                onPress: () => {
+                  setIsStarting(false);
+                  executeStartRecording(true, false);
+                },
+              },
+              {
+                text: 'Open App Settings',
+                onPress: async () => {
+                  setIsStarting(false);
+                  await ScreenRecorderService.requestOverlayPermission();
+                },
+              },
             ]
           );
           return;
@@ -226,31 +236,28 @@ export const HomeScreen: React.FC<Props> = ({
         showCamera: requestedShowCamera,
       };
 
-      await ScreenRecorderService.startRecording(options);
-
+      // 2. Run countdown first (if configured) so Android MediaProjection token is consumed immediately upon consent
       if (settings.countdownSeconds > 0) {
         setCountdown(settings.countdownSeconds);
-      }
-      await new Promise<void>((resolve) => {
-        if (settings.countdownSeconds === 0) {
-          resolve();
-          return;
-        }
-        countdownTimerRef.current = setInterval(() => {
-          setCountdown((current) => {
-            if (current === null || current <= 1) {
-              if (countdownTimerRef.current) {
-                clearInterval(countdownTimerRef.current);
-                countdownTimerRef.current = null;
+        await new Promise<void>((resolve) => {
+          countdownTimerRef.current = setInterval(() => {
+            setCountdown((current) => {
+              if (current === null || current <= 1) {
+                if (countdownTimerRef.current) {
+                  clearInterval(countdownTimerRef.current);
+                  countdownTimerRef.current = null;
+                }
+                resolve();
+                return null;
               }
-              resolve();
-              return null;
-            }
-            return current - 1;
-          });
-        }, 1000);
-      });
+              return current - 1;
+            });
+          }, 1000);
+        });
+      }
 
+      // 3. Request MediaProjection consent and begin recording immediately
+      await ScreenRecorderService.startRecording(options);
       await ScreenRecorderService.beginRecording();
       setIsRecording(true);
       setIsPaused(false);
