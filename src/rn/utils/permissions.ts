@@ -18,28 +18,39 @@ export async function requestScreenRecordingPermissions(recordAudio: boolean = t
   }
 
   try {
-    const ensurePermission = async (permission: string): Promise<boolean> => {
-      const alreadyGranted = await PermissionsAndroid.check(permission as any);
-      if (alreadyGranted) return true;
+    const permissionsToRequest: string[] = [];
 
-      await PermissionsAndroid.request(permission as any);
-      return PermissionsAndroid.check(permission as any);
-    };
+    if (Platform.Version >= 33) {
+      permissionsToRequest.push('android.permission.POST_NOTIFICATIONS');
+    }
+    if (recordAudio) {
+      permissionsToRequest.push(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
+    }
+    if (useCamera) {
+      permissionsToRequest.push(PermissionsAndroid.PERMISSIONS.CAMERA);
+    }
+    if (Platform.Version < 29) {
+      permissionsToRequest.push(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE);
+    }
+
+    if (permissionsToRequest.length > 0) {
+      await PermissionsAndroid.requestMultiple(permissionsToRequest as any);
+    }
 
     const canRecordAudio = recordAudio
-      ? await ensurePermission(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO)
+      ? await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO)
       : true;
 
     const canUseCamera = useCamera
-      ? await ensurePermission(PermissionsAndroid.PERMISSIONS.CAMERA)
+      ? await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.CAMERA)
       : true;
 
     const canNotify = Platform.Version >= 33
-      ? await ensurePermission('android.permission.POST_NOTIFICATIONS')
+      ? await PermissionsAndroid.check('android.permission.POST_NOTIFICATIONS' as any)
       : true;
 
     const canWriteStorage = Platform.Version < 29
-      ? await ensurePermission(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE)
+      ? await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE)
       : true;
 
     return {
