@@ -4,7 +4,6 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -18,12 +17,10 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import android.util.DisplayMetrics
 import android.util.Log
 import android.view.WindowManager
 import android.view.Gravity
 import android.graphics.PixelFormat
-import android.view.LayoutInflater
 import android.view.View
 import android.view.MotionEvent
 import android.widget.FrameLayout
@@ -37,14 +34,10 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.IconCompat
-import androidx.core.content.pm.ShortcutInfoCompat
-import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.lifecycle.LifecycleService
 import com.screenrecorder.MainActivity
 import com.screenrecorder.R
 import java.io.File
-import java.io.IOException
 
 class ScreenRecordService : LifecycleService() {
 
@@ -95,7 +88,6 @@ class ScreenRecordService : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-        createRecordingBubbleShortcut()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -112,9 +104,15 @@ class ScreenRecordService : LifecycleService() {
             when (action) {
                 ACTION_START -> {
                     val resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, 0)
-                    val resultData = if (Build.VERSION.SDK_INT >= 33) {
-                        intent.getParcelableExtra(EXTRA_RESULT_DATA, Intent::class.java)
-                    } else {
+                    val resultData: Intent? = try {
+                        if (Build.VERSION.SDK_INT >= 33) {
+                            intent.getParcelableExtra(EXTRA_RESULT_DATA, Intent::class.java)
+                        } else {
+                            @Suppress("DEPRECATION")
+                            intent.getParcelableExtra(EXTRA_RESULT_DATA) as? Intent
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to unparcel resultData intent: ${e.message}")
                         @Suppress("DEPRECATION")
                         intent.getParcelableExtra(EXTRA_RESULT_DATA) as? Intent
                     }
@@ -127,7 +125,8 @@ class ScreenRecordService : LifecycleService() {
                     val recordAudio = intent.getBooleanExtra(EXTRA_RECORD_AUDIO, true)
                     val showCamera = intent.getBooleanExtra(EXTRA_SHOW_CAMERA, false)
 
-                    startForegroundWithNotification(showCamera)
+                    startForegroundWithNotification(showCamera, recordAudio)
+
                     if (resultData != null && resultCode != 0) {
                         initRecording(resultCode, resultData, width, height, dpi, fps, bitrate, recordAudio)
                         showRecordingControl()
@@ -136,6 +135,9 @@ class ScreenRecordService : LifecycleService() {
                         }
                     } else {
                         Log.e(TAG, "Missing MediaProjection data. ResultCode: $resultCode, Data: ${resultData != null}")
+                        try {
+                            stopForeground(STOP_FOREGROUND_REMOVE)
+                        } catch (_: Exception) {}
                         stopSelf()
                     }
                 }
@@ -149,6 +151,10 @@ class ScreenRecordService : LifecycleService() {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error in onStartCommand: ${e.message}", e)
+            try {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            } catch (_: Exception) {}
+            stopSelf()
         }
         return START_NOT_STICKY
     }
@@ -162,39 +168,16 @@ class ScreenRecordService : LifecycleService() {
             ).apply {
                 description = "Shows recording status and controls"
                 setShowBadge(false)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    setAllowBubbles(true)
-                }
             }
             val notificationManager = getSystemService(NotificationManager::class.java)
             notificationManager?.createNotificationChannel(channel)
         }
     }
 
-    private fun createRecordingBubbleShortcut() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-        }
-        val shortcut = ShortcutInfoCompat.Builder(this, "screen_recording_control")
-            .setShortLabel("Screen Recording")
-            .setLongLabel("Screen Recording Controls")
-            .setIcon(IconCompat.createWithResource(this, R.drawable.ic_notification))
-            .setIntent(intent)
-            .setRank(0)
-            .setCategories(setOf("android.shortcut.conversation"))
-            .build()
-        ShortcutManagerCompat.pushDynamicShortcut(this, shortcut)
-    }
-
-    private fun startForegroundWithNotification(showCamera: Boolean) {
+    private fun startForegroundWithNotification(showCamera: Boolean, recordAudio: Boolean) {
         val notification = buildNotification("00:00:00", isPaused = false)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            var serviceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
-            if (showCamera && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                serviceType = serviceType or ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
-            }
-            startForeground(NOTIFICATION_ID, notification, serviceType)
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
         } else {
             startForeground(NOTIFICATION_ID, notification)
         }
@@ -225,13 +208,15 @@ class ScreenRecordService : LifecycleService() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+        val iconRes = if (R.drawable.ic_notification != 0) R.drawable.ic_notification else android.R.drawable.ic_menu_camera
+
+        return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Screen Recording Active")
             .setContentText("Duration: $timerText")
-            .setSmallIcon(if (R.drawable.ic_notification != 0) R.drawable.ic_notification else android.R.drawable.ic_menu_camera)
+            .setSmallIcon(iconRes)
             .setContentIntent(openAppPendingIntent)
-            .setShortcutId("screen_recording_control")
             .setOngoing(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .addAction(
                 0,
@@ -239,21 +224,7 @@ class ScreenRecordService : LifecycleService() {
                 pauseOrResumePendingIntent
             )
             .addAction(0, "Stop Recording", stopPendingIntent)
-        
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            builder.setBubbleMetadata(
-                NotificationCompat.BubbleMetadata.Builder(
-                    openAppPendingIntent,
-                    IconCompat.createWithResource(this, R.drawable.ic_notification)
-                )
-                    .setDesiredHeight(240)
-                    .setAutoExpandBubble(false)
-                    .setSuppressNotification(false)
-                    .build()
-            )
-        }
-
-        return builder.build()
+            .build()
     }
 
     private fun updateNotificationTimer(elapsedMillis: Long) {
@@ -282,6 +253,7 @@ class ScreenRecordService : LifecycleService() {
 
             if (mediaProjection == null) {
                 Log.e(TAG, "Failed to get MediaProjection instance")
+                cleanup()
                 stopSelf()
                 return
             }
@@ -291,6 +263,22 @@ class ScreenRecordService : LifecycleService() {
                     super.onStop()
                     Log.w(TAG, "MediaProjection session stopped by system")
                     stopRecording()
+                }
+
+                override fun onCapturedContentResize(newWidth: Int, newHeight: Int) {
+                    if (newWidth > 0 && newHeight > 0) {
+                        handler.post {
+                            try {
+                                val alignedW = (newWidth / 16) * 16
+                                val alignedH = (newHeight / 16) * 16
+                                if (alignedW > 0 && alignedH > 0) {
+                                    virtualDisplay?.resize(alignedW, alignedH, dpi)
+                                }
+                            } catch (e: Exception) {
+                                Log.w(TAG, "Failed to resize virtual display: ${e.message}")
+                            }
+                        }
+                    }
                 }
             }, handler)
 
@@ -304,35 +292,111 @@ class ScreenRecordService : LifecycleService() {
                 MediaRecorder()
             }
 
-            mediaRecorder?.apply {
-                if (recordAudio) {
-                    setAudioSource(MediaRecorder.AudioSource.MIC)
+            // Cap base dimensions to 1080p width to guarantee compatibility with Google Pixel / Tensor H.264 encoder limits
+            var baseWidth = width
+            var baseHeight = height
+            if (baseWidth > 1080) {
+                val ratio = baseHeight.toDouble() / baseWidth.toDouble()
+                baseWidth = 1080
+                baseHeight = (1080 * ratio).toInt()
+            }
+            baseWidth = (baseWidth / 16) * 16
+            baseHeight = (baseHeight / 16) * 16
+            if (baseWidth <= 0) baseWidth = 720
+            if (baseHeight <= 0) baseHeight = 1280
+
+            var preparedSuccess = false
+            var finalRecordWidth = baseWidth
+            var finalRecordHeight = baseHeight
+
+            val widthsToTry = intArrayOf(baseWidth, 720, 540)
+            val bitratesToTry = intArrayOf(bitrate, 6000000, 4000000)
+
+            for (w in widthsToTry) {
+                if (preparedSuccess) break
+                val ratio = baseHeight.toDouble() / baseWidth.toDouble()
+                val curW = (w / 16) * 16
+                val curH = ((w * ratio).toInt() / 16) * 16
+
+                for (b in bitratesToTry) {
+                    if (preparedSuccess) break
+
+                    // Attempt 1: Screen + Mic Audio
+                    if (recordAudio) {
+                        try {
+                            mediaRecorder?.reset()
+                            mediaRecorder?.apply {
+                                setAudioSource(MediaRecorder.AudioSource.MIC)
+                                setVideoSource(MediaRecorder.VideoSource.SURFACE)
+                                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                                setOutputFile(outputFile?.absolutePath)
+                                setVideoSize(curW, curH)
+                                setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+                                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                                setAudioEncodingBitRate(128000)
+                                setAudioSamplingRate(44100)
+                                setVideoEncodingBitRate(b)
+                                setVideoFrameRate(fps.coerceAtMost(60))
+                                prepare()
+                            }
+                            preparedSuccess = true
+                            finalRecordWidth = curW
+                            finalRecordHeight = curH
+                            Log.i(TAG, "MediaRecorder prepared with audio: ${curW}x${curH} @ ${b}bps")
+                            break
+                        } catch (ex: Exception) {
+                            Log.w(TAG, "MediaRecorder audio prepare failed at ${curW}x${curH} @ ${b}bps: ${ex.message}")
+                        }
+                    }
+
+                    // Attempt 2: Video Only
+                    try {
+                        mediaRecorder?.reset()
+                        mediaRecorder?.apply {
+                            setVideoSource(MediaRecorder.VideoSource.SURFACE)
+                            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                            setOutputFile(outputFile?.absolutePath)
+                            setVideoSize(curW, curH)
+                            setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+                            setVideoEncodingBitRate(b)
+                            setVideoFrameRate(fps.coerceAtMost(60))
+                            prepare()
+                        }
+                        preparedSuccess = true
+                        finalRecordWidth = curW
+                        finalRecordHeight = curH
+                        Log.i(TAG, "MediaRecorder prepared (video-only): ${curW}x${curH} @ ${b}bps")
+                        break
+                    } catch (ex: Exception) {
+                        Log.w(TAG, "MediaRecorder video-only prepare failed at ${curW}x${curH} @ ${b}bps: ${ex.message}")
+                    }
                 }
-                setVideoSource(MediaRecorder.VideoSource.SURFACE)
-                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                setOutputFile(outputFile?.absolutePath)
-                setVideoSize(width, height)
-                setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-                if (recordAudio) {
-                    setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                    setAudioEncodingBitRate(128000)
-                    setAudioSamplingRate(44100)
-                }
-                setVideoEncodingBitRate(bitrate)
-                setVideoFrameRate(fps)
-                prepare()
+            }
+
+            if (!preparedSuccess) {
+                Log.e(TAG, "Failed to prepare MediaRecorder across all fallback resolutions")
+                cleanup()
+                stopSelf()
+                return
             }
 
             val surface = mediaRecorder?.surface
+            if (surface == null) {
+                Log.e(TAG, "MediaRecorder surface is null")
+                cleanup()
+                stopSelf()
+                return
+            }
+
             virtualDisplay = mediaProjection?.createVirtualDisplay(
                 "ScreenRecordServiceDisplay",
-                width,
-                height,
+                finalRecordWidth,
+                finalRecordHeight,
                 dpi,
-                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR or DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                 surface,
                 null,
-                null
+                handler
             )
 
             mediaRecorder?.start()
@@ -419,7 +483,9 @@ class ScreenRecordService : LifecycleService() {
             mediaProjection = null
         }
 
-        stopForeground(STOP_FOREGROUND_REMOVE)
+        try {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } catch (_: Exception) {}
         removeRecordingControl()
         removeCameraOverlay()
         stopSelf()
@@ -440,7 +506,9 @@ class ScreenRecordService : LifecycleService() {
         mediaRecorder = null
         virtualDisplay = null
         mediaProjection = null
-        stopForeground(STOP_FOREGROUND_REMOVE)
+        try {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } catch (_: Exception) {}
         removeRecordingControl()
         removeCameraOverlay()
     }
@@ -532,22 +600,28 @@ class ScreenRecordService : LifecycleService() {
             cameraOverlayView = previewView
             isCameraShowing = true
 
-            val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
-            cameraProviderFuture.addListener({
+            previewView.post {
                 try {
-                    val cameraProvider = cameraProviderFuture.get()
-                    val preview = Preview.Builder().build().also {
-                        it.setSurfaceProvider(previewView.surfaceProvider)
-                    }
+                    val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+                    cameraProviderFuture.addListener({
+                        try {
+                            val cameraProvider = cameraProviderFuture.get()
+                            val preview = Preview.Builder().build().also {
+                                it.setSurfaceProvider(previewView.surfaceProvider)
+                            }
 
-                    val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
-                    cameraProvider.unbindAll()
-                    cameraProvider.bindToLifecycle(this, cameraSelector, preview)
-                } catch (exc: Exception) {
-                    Log.e(TAG, "Camera binding failed: ${exc.message}")
+                            val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+                            cameraProvider.unbindAll()
+                            cameraProvider.bindToLifecycle(this, cameraSelector, preview)
+                            Log.i(TAG, "Camera face cam overlay bound successfully to front camera")
+                        } catch (exc: Exception) {
+                            Log.e(TAG, "Camera binding failed for overlay: ${exc.message}")
+                        }
+                    }, ContextCompat.getMainExecutor(this))
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error initializing ProcessCameraProvider for overlay: ${e.message}")
                 }
-            }, ContextCompat.getMainExecutor(this))
-
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to add camera overlay: ${e.message}")
             isCameraShowing = false

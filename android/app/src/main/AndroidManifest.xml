@@ -1,10 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Permissions required for screen recording and foreground service -->
+    <!-- Permissions required for screen recording, camera, audio, and foreground services -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -40,12 +41,12 @@
             </intent-filter>
         </activity>
 
-        <!-- MediaProjection Foreground Service for Android 14+ compliance -->
+        <!-- MediaProjection Foreground Service for Android 14+ / 15+ / 16+ / 17+ compliance -->
         <service
             android:name=".recording.ScreenRecordService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="mediaProjection|camera" />
+            android:foregroundServiceType="mediaProjection" />
 
         <!-- Background Camera Recording Foreground Service -->
         <service
