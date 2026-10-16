@@ -31,3 +31,6 @@ android/app/build/
 *.jks
 config.bat
 >>>>>>> 637e7bde570a9d6c621fcdfd3aaa58333566c5f1
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat

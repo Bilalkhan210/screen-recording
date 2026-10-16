@@ -1,12 +1,13 @@
 # ninja log v5
-0	12	0	clean	2f79e7a5d3d58b05
-2	98	0	H:/New folder/screen-recorder/android/app/.cxx/RelWithDebInfo/c1ke2573/x86_64/CMakeFiles/cmake.verify_globs	452786c1148b8cf5
-17	10359	8119573206723051	CMakeFiles/appmodules.dir/H_/New_folder/screen-recorder/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp.o	c3c15ed939c47c52
-11387	12031	8119573223373064	H:/New folder/screen-recorder/android/app/build/intermediates/cxx/RelWithDebInfo/c1ke2573/obj/x86_64/libappmodules.so	32ee087a2da3cc8f
-29	11387	8119573216993027	CMakeFiles/appmodules.dir/OnLoad.cpp.o	d7e1abe58bd2c94d
-54	1016	8137649715042401	build.ninja	9b1fbfd6b512e43a
-99	12457	8137649715042401	build.ninja	9b1fbfd6b512e43a
-1	33	0	H:/New folder/screen-recorder/android/app/.cxx/RelWithDebInfo/c1ke2573/x86_64/CMakeFiles/cmake.verify_globs	452786c1148b8cf5
-14	10325	8137649818832382	CMakeFiles/appmodules.dir/H_/New_folder/screen-recorder/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp.o	c3c15ed939c47c52
-24	11271	8137649828392365	CMakeFiles/appmodules.dir/OnLoad.cpp.o	d7e1abe58bd2c94d
-11271	12074	8137649835692407	H:/New folder/screen-recorder/android/app/build/intermediates/cxx/RelWithDebInfo/c1ke2573/obj/x86_64/libappmodules.so	32ee087a2da3cc8f
+3	52	0	H:/New folder/screen-recorder/android/app/.cxx/RelWithDebInfo/c1ke2573/x86_64/CMakeFiles/cmake.verify_globs	452786c1148b8cf5
+1	254	0	clean	2f79e7a5d3d58b05
+22	21991	8138489063980174	CMakeFiles/appmodules.dir/H_/New_folder/screen-recorder/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp.o	c3c15ed939c47c52
+143	1536	8138538195164682	build.ninja	9b1fbfd6b512e43a
+37	24097	8138489084780241	CMakeFiles/appmodules.dir/OnLoad.cpp.o	d7e1abe58bd2c94d
+24099	24541	8138489089490271	H:/New folder/screen-recorder/android/app/build/intermediates/cxx/RelWithDebInfo/c1ke2573/obj/x86_64/libappmodules.so	32ee087a2da3cc8f
+2	47	0	H:/New folder/screen-recorder/android/app/.cxx/RelWithDebInfo/c1ke2573/x86_64/CMakeFiles/cmake.verify_globs	452786c1148b8cf5
+3	183	0	H:/New folder/screen-recorder/android/app/.cxx/RelWithDebInfo/c1ke2573/x86_64/CMakeFiles/cmake.verify_globs	452786c1148b8cf5
+2	40	0	H:/New folder/screen-recorder/android/app/.cxx/RelWithDebInfo/c1ke2573/x86_64/CMakeFiles/cmake.verify_globs	452786c1148b8cf5
+2	95	0	H:/New folder/screen-recorder/android/app/.cxx/RelWithDebInfo/c1ke2573/x86_64/CMakeFiles/cmake.verify_globs	452786c1148b8cf5
+2	40	0	H:/New folder/screen-recorder/android/app/.cxx/RelWithDebInfo/c1ke2573/x86_64/CMakeFiles/cmake.verify_globs	452786c1148b8cf5
+3	44	0	H:/New folder/screen-recorder/android/app/.cxx/RelWithDebInfo/c1ke2573/x86_64/CMakeFiles/cmake.verify_globs	452786c1148b8cf5
